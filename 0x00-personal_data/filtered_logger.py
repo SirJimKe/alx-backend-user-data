@@ -46,11 +46,10 @@ def get_logger() -> logging.Logger:
     logger.setLevel(logging.INFO)
 
     handler = StreamHandler()
-    formatter = RedactingFormatter(fields=list(PII_FIELDS))
+
+    formatter = RedactingFormatter(PII_FIELDS)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    logger.propagate = False
-
     return logger
 
 
@@ -58,6 +57,24 @@ def filter_datum(fields: List[str], redaction: str, message: str,
                  separator: str) -> str:
     """Obfuscates specified fields in a log message"""
     for field in fields:
-        message = re.sub(fr'{field}\s*=\s*(.*?){separator}',
-                         f'{field}={redaction}{separator}', message)
+        message = re.sub(field+'=.*?'+separator,
+                         field+'='+redaction+separator, message)
     return message
+
+
+def main():
+    """main function"""
+    db = get_db()
+    logger = get_logger()
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM users;")
+    fields = cursor.column_names
+    for row in cursor:
+        message = "".join("{}={}; ".format(k, v) for k, v in zip(fields, row))
+        logger.info(message.strip())
+    cursor.close()
+    db.close()
+
+
+if __name__ == "__main__":
+    main()
