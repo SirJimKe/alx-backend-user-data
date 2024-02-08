@@ -4,6 +4,7 @@
 import re
 from typing import List
 import logging
+from logging import StreamHandler
 
 
 class RedactingFormatter(logging.Formatter):
@@ -23,6 +24,9 @@ class RedactingFormatter(logging.Formatter):
         return super().format(record)
 
 
+PII_FIELDS = ("name", "email", "password", "ssn", "phone")
+
+
 def filter_datum(fields: List[str], redaction: str, message: str,
                  separator: str) -> str:
     """Obfuscates specified fields in a log message"""
@@ -30,3 +34,17 @@ def filter_datum(fields: List[str], redaction: str, message: str,
         message = re.sub(fr'{field}\s*=\s*(.*?){separator}',
                          f'{field}={redaction}{separator}', message)
     return message
+
+
+def get_logger() -> logging.Logger:
+    """Returns a logger object named 'user_data'"""
+    logger = logging.getLogger('user_data')
+    logger.setLevel(logging.INFO)
+
+    handler = StreamHandler()
+    formatter = RedactingFormatter(fields=list(PII_FIELDS))
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.propagate = False
+
+    return logger
