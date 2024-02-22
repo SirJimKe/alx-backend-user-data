@@ -53,12 +53,12 @@ def logout():
     session_id = request.cookies.get("session_id")
 
     if session_id is None:
-        return jsonify({"message": "Session ID not found"}), 403
+        abort(403)
 
     user = AUTH.get_user_from_session_id(session_id)
 
     if user is None:
-        return jsonify({"message": "Invalid session ID"}), 403
+        abort(403)
 
     AUTH.destroy_session(user.id)
 
@@ -71,12 +71,12 @@ def profile():
     session_id = request.cookies.get("session_id")
 
     if session_id is None:
-        return jsonify({"message": "Session ID not found"}), 403
+        abort(403)
 
     user = AUTH.get_user_from_session_id(session_id)
 
     if user is None:
-        return jsonify({"message": "Invalid session ID"}), 403
+        abort(403)
 
     return jsonify({"email": user.email}), 200
 
